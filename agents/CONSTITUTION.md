@@ -23,3 +23,11 @@
 - **Never delete or overwrite existing code** unless explicitly instructed to or if part of a task from `agents/TASKS.md`.
 - **Never change code unless explicitly instructed** Never assume a question as an instruction to act but only as an instruction to respond and explain. Only start changing files when user gave permission. Follow the practice of 1. Investigate, 2. Reflect, 3. Explain and Suggest to user 4. Wait for user instructions response of permission.
 - **Use folder `tmp_agent/` for any shell scripts or other scripts that you might use to streamline repeated commands or tests or to run tests on components.
+
+### Python Tooling & Dependency Management
+- **Always use `uv` for dependency management and running Python code** – never use pip or virtualenv directly.
+- **All Python scripts in `scripts/` should be self-executable** with the shebang line: `#!/usr/bin/env -S uv run --quiet --script`
+- **Make scripts executable**: `chmod +x script_name.py` after creating them.
+- **Installing dependencies**: Use `uv add package_name` in the project root.
+- **Running scripts**: Execute directly with `./script_name.py` or via `uv run script_name.py`.
+- **Prefer modern HTTP libraries**: Use `httpx` over `requests` (HTTP/2 and HTTP/3 support) and `hypercorn` over `uvicorn` (HTTP/2 and HTTP/3 support).

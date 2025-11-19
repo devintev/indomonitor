@@ -1,0 +1,19 @@
+# Web Scraping
+beautifulsoup4
+scrapy
+playwright
+lxml
+
+# HTTP Client (HTTP/2, HTTP/3 support)
+httpx[http2]
+
+# Database
+psycopg2-binary
+asyncpg
+
+# Scheduling
+apscheduler
+
+# Utilities
+python-dotenv
+pydantic

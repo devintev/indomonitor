@@ -1,13 +1,24 @@
 # System Architecture
 
 ## Overview
-High-level description of the objective of the software and the system architecture it intends to use.
+Automated news monitoring system with autonomous Claude Code agents that scrape news websites, extract content, and store it in a database. The system is self-healing and self-maintaining through a multi-agent orchestration pattern.
 
 ## Critical Implementation Reminders
-- file naming convention: none yet
+- **Python Dependency Management**: Always use `uv` (never pip or virtualenv)
+- **Self-Executable Scripts**: All Python scripts in `scripts/` must start with `#!/usr/bin/env -S uv run --quiet --script` and be made executable (`chmod +x`)
+- **HTTP Library Preference**: Use `httpx` (not `requests`) and `hypercorn` (not `uvicorn`) for HTTP/2 and HTTP/3 support
+- **Script Organization**: Individual scraper scripts stored as strings in database, executed by manager agent
 
 ## Frameworks and Libraries
-List of programming languages, their libraries and any frameworks to be used including their version information
+- **Python**: 3.12+
+- **Dependency Management**: uv
+- **Web Scraping**: BeautifulSoup4, Scrapy, Playwright
+- **HTTP Client**: httpx (HTTP/2, HTTP/3 support)
+- **Server**: hypercorn (HTTP/2, HTTP/3 support)
+- **Database**: PostgreSQL
+- **Scheduling**: APScheduler or Celery
+- **Agent Platform**: Claude Code (headless mode)
+- **Environment**: Docker
 
 ## Components Structure & Data Flow
 Systematic overview of relationships of the components and how data is flowing between them.
