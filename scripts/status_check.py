@@ -3,6 +3,7 @@
 # dependencies = [
 #   "pymysql",
 #   "python-dotenv",
+#   "pyyaml",
 # ]
 # ///
 """
@@ -20,22 +21,58 @@ import sys
 from pathlib import Path
 from dotenv import load_dotenv
 import pymysql
-from typing import Dict, List, Tuple
+import yaml
+from typing import Dict, List, Optional
 
 
-def load_environment() -> Dict[str, str]:
+def load_environment() -> None:
     """Load environment variables from .env file."""
-    # Look for .env in the project root (parent of scripts/)
     env_path = Path(__file__).parent.parent / '.env'
     load_dotenv(env_path)
 
-    config = {
-        'host': os.getenv('MYSQL_HOST', 'vosscloud'),
-        'port': int(os.getenv('MYSQL_PORT', '3306')),
-        'user': os.getenv('MYSQL_USER', 'root'),
-        'password': os.getenv('MYSQL_PASSWORD', ''),
-    }
 
+def load_database_config() -> Dict:
+    """Load database configuration from config/database.yaml."""
+    config_path = Path(__file__).parent.parent / 'config' / 'database.yaml'
+    if not config_path.exists():
+        print(f"Error: Configuration file not found at {config_path}")
+        sys.exit(1)
+    
+    with open(config_path, 'r') as f:
+        return yaml.safe_load(f)
+
+
+def get_connection_config(connection_name: Optional[str] = None) -> Dict[str, str]:
+    """Get MySQL connection configuration for specified or default connection."""
+    db_config = load_database_config()
+    
+    # Use provided connection name or default
+    if connection_name is None:
+        connection_name = db_config.get('default_connection', 'vosscloud')
+    
+    # Get connection settings
+    connections = db_config.get('mysql_connections', {})
+    if connection_name not in connections:
+        print(f"Error: Connection '{connection_name}' not found in config/database.yaml")
+        print(f"Available connections: {', '.join(connections.keys())}")
+        sys.exit(1)
+    
+    conn_settings = connections[connection_name]
+    env_prefix = conn_settings['env_prefix']
+    
+    # Build config from environment variables
+    config = {
+        'name': connection_name,
+        'host': os.getenv(f'{env_prefix}_HOST', 'localhost'),
+        'port': int(os.getenv(f'{env_prefix}_PORT', '3306')),
+        'user': os.getenv(f'{env_prefix}_USER', 'root'),
+        'password': os.getenv(f'{env_prefix}_PASSWORD', ''),
+        'connection_timeout': conn_settings.get('connection_timeout', 5),
+        'read_timeout': conn_settings.get('read_timeout', 30),
+        'write_timeout': conn_settings.get('write_timeout', 30),
+        'charset': conn_settings.get('charset', 'utf8mb4'),
+    }
+    
     return config
 
 
@@ -43,12 +80,16 @@ def test_connection(config: Dict[str, str]) -> pymysql.connections.Connection:
     """Test MySQL connection and return connection object."""
     try:
         print(f"Connecting to MySQL server at {config['host']}:{config['port']}...")
+        print(f"Using connection: {config['name']}")
         connection = pymysql.connect(
             host=config['host'],
             port=config['port'],
             user=config['user'],
             password=config['password'],
-            connect_timeout=5
+            connect_timeout=config['connection_timeout'],
+            read_timeout=config['read_timeout'],
+            write_timeout=config['write_timeout'],
+            charset=config['charset']
         )
         print("✓ Connection successful!")
         return connection
@@ -95,8 +136,14 @@ def main():
     print("MySQL Server Status Check")
     print("=" * 60)
 
-    # Load configuration
-    config = load_environment()
+    # Load environment variables
+    load_environment()
+
+    # Parse command line arguments
+    connection_name = sys.argv[1] if len(sys.argv) > 1 else None
+
+    # Get connection configuration
+    config = get_connection_config(connection_name)
 
     # Test connection
     connection = test_connection(config)

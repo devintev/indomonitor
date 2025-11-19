@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./scripts/indomonitor.py:*)",
+      "Bash(./scripts/manage_db.py:*)",
+      "Bash(./scripts/status_check.py:*)",
+      "Bash(uv:*)",
+      "Bash(python3:*)",
+      "Bash(chmod:*)",
+      "Bash(curl:*)"
+    ]
+  }
+}

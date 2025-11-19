@@ -1,0 +1,40 @@
+# =============================================================================
+# Scraper Execution Metadata Field Set
+# =============================================================================
+# Common fields for tracking scraper execution lifecycle
+# Used by: scrape_runs table
+# =============================================================================
+
+field_set:
+  name: "scraper_metadata"
+  description: "Common fields for tracking scraper execution lifecycle"
+  
+  fields:
+    - name: "started_at"
+      title: "Started At"
+      type: "timestamp"
+      sql_type: "TIMESTAMP"
+      description: "When the scraper execution started"
+      required: true
+      default: "CURRENT_TIMESTAMP"
+      python_property_name: "started_at"
+      typescript_property_name: "startedAt"
+
+    - name: "completed_at"
+      title: "Completed At"
+      type: "timestamp"
+      sql_type: "TIMESTAMP"
+      description: "When the scraper execution completed (NULL if still running)"
+      required: false
+      python_property_name: "completed_at"
+      typescript_property_name: "completedAt"
+
+    - name: "status"
+      title: "Status"
+      type: "string"
+      sql_type: "VARCHAR(50)"
+      description: "Execution status"
+      required: true
+      enum: ["running", "completed", "failed"]
+      python_property_name: "status"
+      typescript_property_name: "status"

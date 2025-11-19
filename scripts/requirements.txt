@@ -8,12 +8,13 @@ lxml
 httpx[http2]
 
 # Database
-psycopg2-binary
-asyncpg
 pymysql
 
 # Scheduling
 apscheduler
+
+# Configuration
+pyyaml
 
 # Utilities
 python-dotenv

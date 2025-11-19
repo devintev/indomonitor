@@ -100,3 +100,11 @@ pip-delete-this-directory.txt
 # uv
 .uv/
 uv.lock
+
+# Generated Code (from YAML schemas)
+# Only exclude generated code, keep .gitkeep and README.md files
+database/generated/**
+!database/generated/.gitkeep
+!database/generated/*/.gitkeep
+!database/generated/*/*/.gitkeep
+!database/generated/README.md

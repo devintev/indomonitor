@@ -1,0 +1,52 @@
+# =============================================================================
+# Database Connections Configuration
+# =============================================================================
+# This file defines available MySQL database connections for the news monitoring system.
+# Sensitive credentials are stored in .env file using pattern: {CONNECTION_NAME}_MYSQL_{PARAMETER}
+# =============================================================================
+
+# Default connection to use when none is specified
+default_connection: vosscloud
+
+# MySQL Connections
+mysql_connections:
+  # Local LAN MySQL Server
+  vosscloud:
+    description: "MySQL server on local network (vosscloud)"
+    env_prefix: "VOSSCLOUD_MYSQL"
+    connection_timeout: 5
+    read_timeout: 30
+    write_timeout: 30
+    charset: utf8mb4
+    use_unicode: true
+    
+  # Production MySQL
+  production:
+    description: "Production MySQL database"
+    env_prefix: "PRODUCTION_MYSQL"
+    connection_timeout: 10
+    read_timeout: 60
+    write_timeout: 60
+    charset: utf8mb4
+    use_unicode: true
+    ssl_enabled: true  # Enable SSL for production
+    
+  # Staging MySQL
+  staging:
+    description: "Staging environment MySQL"
+    env_prefix: "STAGING_MYSQL"
+    connection_timeout: 5
+    read_timeout: 30
+    write_timeout: 30
+    charset: utf8mb4
+    use_unicode: true
+    
+  # Local Development MySQL (e.g., Docker)
+  local:
+    description: "Local development MySQL (Docker)"
+    env_prefix: "LOCAL_MYSQL"
+    connection_timeout: 5
+    read_timeout: 30
+    write_timeout: 30
+    charset: utf8mb4
+    use_unicode: true

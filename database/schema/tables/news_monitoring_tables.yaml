@@ -1,0 +1,555 @@
+# =============================================================================
+# News Monitoring System Database Schemas
+# =============================================================================
+# This file defines the complete database schema for the autonomous news
+# monitoring system with Claude Code agents.
+#
+# Database: indomonitor
+# Engine: MySQL 5.5+ / MariaDB
+# Character Set: utf8mb4
+# ==============================================================================
+
+database_schemas:
+  # ============================================================================
+  # NEWS_SITES - News Website Configurations
+  # ============================================================================
+  # Stores configuration and metadata for news websites being monitored
+  # ============================================================================
+  news_sites:
+    title: "News Sites"
+    description: "News website configurations and monitoring metadata"
+    python_class_name: "NewsSite"
+    typescript_class_name: "NewsSite"
+    db_table_name: "news_sites"
+    db_name: "indomonitor"
+    primary_key: "id"
+    
+    include_field_sets: ["audit_timestamps"]
+    
+    fields:
+      - name: "id"
+        title: "ID"
+        type: "integer"
+        sql_type: "INT AUTO_INCREMENT"
+        description: "Primary key"
+        required: true
+        primary_key: true
+        python_property_name: "id"
+        typescript_property_name: "id"
+
+      - name: "url"
+        title: "URL"
+        type: "text"
+        sql_type: "TEXT"
+        description: "Base URL of the news website"
+        required: true
+        python_property_name: "url"
+        typescript_property_name: "url"
+
+      - name: "name"
+        title: "Name"
+        type: "string"
+        sql_type: "VARCHAR(255)"
+        description: "Human-readable name of the news site"
+        required: false
+        python_property_name: "name"
+        typescript_property_name: "name"
+
+      - name: "config"
+        title: "Configuration"
+        type: "json"
+        sql_type: "JSON"
+        description: "Site-specific configuration (selectors, URLs, etc.)"
+        required: false
+        python_property_name: "config"
+        typescript_property_name: "config"
+
+      - name: "status"
+        title: "Status"
+        type: "string"
+        sql_type: "VARCHAR(50)"
+        description: "Current operational status of the site"
+        required: false
+        enum: ["active", "inactive", "pending", "error"]
+        python_property_name: "status"
+        typescript_property_name: "status"
+
+      - name: "script_health_status"
+        title: "Script Health Status"
+        type: "string"
+        sql_type: "VARCHAR(50)"
+        description: "Health status of associated scraper scripts"
+        required: false
+        enum: ["missing", "failed", "healed", "success"]
+        python_property_name: "script_health_status"
+        typescript_property_name: "scriptHealthStatus"
+
+      - name: "main_script_id"
+        title: "Main Script ID"
+        type: "integer"
+        sql_type: "INT"
+        description: "Foreign key to primary scraper script"
+        required: false
+        foreign_key:
+          table: "scraper_scripts"
+          column: "id"
+          on_delete: "SET NULL"
+        python_property_name: "main_script_id"
+        typescript_property_name: "mainScriptId"
+
+      - name: "secondary_script_id"
+        title: "Secondary Script ID"
+        type: "integer"
+        sql_type: "INT"
+        description: "Foreign key to fallback scraper script"
+        required: false
+        foreign_key:
+          table: "scraper_scripts"
+          column: "id"
+          on_delete: "SET NULL"
+        python_property_name: "secondary_script_id"
+        typescript_property_name: "secondaryScriptId"
+
+      - name: "tertiary_script_id"
+        title: "Tertiary Script ID"
+        type: "integer"
+        sql_type: "INT"
+        description: "Foreign key to tertiary scraper script"
+        required: false
+        foreign_key:
+          table: "scraper_scripts"
+          column: "id"
+          on_delete: "SET NULL"
+        python_property_name: "tertiary_script_id"
+        typescript_property_name: "tertiaryScriptId"
+
+      - name: "script_notes"
+        title: "Script Notes"
+        type: "text"
+        sql_type: "TEXT"
+        description: "Notes about script health, issues, or debugging info"
+        required: false
+        python_property_name: "script_notes"
+        typescript_property_name: "scriptNotes"
+
+    indexes:
+      - name: "idx_status"
+        columns: ["status"]
+      - name: "idx_script_health"
+        columns: ["script_health_status"]
+
+  # ============================================================================
+  # SITE_STRUCTURE_REPORTS - Research Findings
+  # ============================================================================
+  # Stores research agent findings about news site structure
+  # ============================================================================
+  site_structure_reports:
+    title: "Site Structure Reports"
+    description: "Research agent findings about news site HTML structure and patterns"
+    python_class_name: "SiteStructureReport"
+    typescript_class_name: "SiteStructureReport"
+    db_table_name: "site_structure_reports"
+    db_name: "indomonitor"
+    primary_key: "id"
+    
+    include_field_sets: []
+    
+    fields:
+      - name: "id"
+        title: "ID"
+        type: "integer"
+        sql_type: "INT AUTO_INCREMENT"
+        description: "Primary key"
+        required: true
+        primary_key: true
+        python_property_name: "id"
+        typescript_property_name: "id"
+
+      - name: "site_id"
+        title: "Site ID"
+        type: "integer"
+        sql_type: "INT"
+        description: "Foreign key to news_sites table"
+        required: true
+        foreign_key:
+          table: "news_sites"
+          column: "id"
+          on_delete: "CASCADE"
+        python_property_name: "site_id"
+        typescript_property_name: "siteId"
+
+      - name: "report_text"
+        title: "Report Text"
+        type: "text"
+        sql_type: "TEXT"
+        description: "Research findings as text (HTML structure, selectors, etc.)"
+        required: false
+        python_property_name: "report_text"
+        typescript_property_name: "reportText"
+
+      - name: "created_at"
+        title: "Created At"
+        type: "timestamp"
+        sql_type: "TIMESTAMP"
+        description: "When the report was created"
+        required: true
+        default: "CURRENT_TIMESTAMP"
+        python_property_name: "created_at"
+        typescript_property_name: "createdAt"
+
+    indexes:
+      - name: "idx_site_id"
+        columns: ["site_id"]
+      - name: "idx_created_at"
+        columns: ["created_at"]
+
+  # ============================================================================
+  # SCRAPER_SCRIPTS - Version-Controlled Scraper Code
+  # ============================================================================
+  # Stores Python scraper scripts as text with version control
+  # ============================================================================
+  scraper_scripts:
+    title: "Scraper Scripts"
+    description: "Version-controlled Python scraper scripts stored as text"
+    python_class_name: "ScraperScript"
+    typescript_class_name: "ScraperScript"
+    db_table_name: "scraper_scripts"
+    db_name: "indomonitor"
+    primary_key: "id"
+    
+    include_field_sets: []
+    
+    fields:
+      - name: "id"
+        title: "ID"
+        type: "integer"
+        sql_type: "INT AUTO_INCREMENT"
+        description: "Primary key"
+        required: true
+        primary_key: true
+        python_property_name: "id"
+        typescript_property_name: "id"
+
+      - name: "site_id"
+        title: "Site ID"
+        type: "integer"
+        sql_type: "INT"
+        description: "Foreign key to news_sites table"
+        required: true
+        foreign_key:
+          table: "news_sites"
+          column: "id"
+          on_delete: "CASCADE"
+        python_property_name: "site_id"
+        typescript_property_name: "siteId"
+
+      - name: "version"
+        title: "Version"
+        type: "integer"
+        sql_type: "INT"
+        description: "Script version number (auto-incrementing per site)"
+        required: true
+        default: "1"
+        python_property_name: "version"
+        typescript_property_name: "version"
+
+      - name: "script_code"
+        title: "Script Code"
+        type: "text"
+        sql_type: "TEXT"
+        description: "Python script source code"
+        required: true
+        python_property_name: "script_code"
+        typescript_property_name: "scriptCode"
+
+      - name: "status"
+        title: "Status"
+        type: "string"
+        sql_type: "VARCHAR(50)"
+        description: "Script status"
+        required: false
+        enum: ["active", "deprecated", "failed"]
+        python_property_name: "status"
+        typescript_property_name: "status"
+
+      - name: "created_at"
+        title: "Created At"
+        type: "timestamp"
+        sql_type: "TIMESTAMP"
+        description: "When the script version was created"
+        required: true
+        default: "CURRENT_TIMESTAMP"
+        python_property_name: "created_at"
+        typescript_property_name: "createdAt"
+
+    indexes:
+      - name: "idx_site_id"
+        columns: ["site_id"]
+      - name: "idx_status"
+        columns: ["status"]
+    
+    unique_constraints:
+      - name: "unique_site_version"
+        columns: ["site_id", "version"]
+
+  # ============================================================================
+  # AGENT_RUNS - AI Agent Execution History
+  # ============================================================================
+  # Tracks execution of Claude Code agents (Manager, Research, ScriptWriter, etc.)
+  # ============================================================================
+  agent_runs:
+    title: "Agent Runs"
+    description: "Execution history for Claude Code agents"
+    python_class_name: "AgentRun"
+    typescript_class_name: "AgentRun"
+    db_table_name: "agent_runs"
+    db_name: "indomonitor"
+    primary_key: "id"
+    
+    include_field_sets: ["agent_metadata"]
+    
+    fields:
+      - name: "id"
+        title: "ID"
+        type: "uuid"
+        sql_type: "CHAR(36)"
+        description: "UUID primary key"
+        required: true
+        primary_key: true
+        python_property_name: "id"
+        typescript_property_name: "id"
+
+      - name: "agent_type"
+        title: "Agent Type"
+        type: "string"
+        sql_type: "VARCHAR(100)"
+        description: "Type of agent that was executed"
+        required: true
+        enum: ["Manager", "Research", "ScriptWriter", "Debug", "Monitor", "Validation"]
+        python_property_name: "agent_type"
+        typescript_property_name: "agentType"
+
+      - name: "site_id"
+        title: "Site ID"
+        type: "integer"
+        sql_type: "INT"
+        description: "Foreign key to news_sites (NULL if not site-specific)"
+        required: false
+        foreign_key:
+          table: "news_sites"
+          column: "id"
+          on_delete: "SET NULL"
+        python_property_name: "site_id"
+        typescript_property_name: "siteId"
+
+    indexes:
+      - name: "idx_agent_type"
+        columns: ["agent_type"]
+      - name: "idx_status"
+        columns: ["status"]
+      - name: "idx_started_at"
+        columns: ["started_at"]
+
+  # ============================================================================
+  # SCRAPE_RUNS - Scraper Execution History
+  # ============================================================================
+  # Tracks individual scraper executions and their results
+  # ============================================================================
+  scrape_runs:
+    title: "Scrape Runs"
+    description: "Execution history for scraper scripts"
+    python_class_name: "ScrapeRun"
+    typescript_class_name: "ScrapeRun"
+    db_table_name: "scrape_runs"
+    db_name: "indomonitor"
+    primary_key: "id"
+    
+    include_field_sets: ["scraper_metadata"]
+    
+    fields:
+      - name: "id"
+        title: "ID"
+        type: "uuid"
+        sql_type: "CHAR(36)"
+        description: "UUID primary key"
+        required: true
+        primary_key: true
+        python_property_name: "id"
+        typescript_property_name: "id"
+
+      - name: "site_id"
+        title: "Site ID"
+        type: "integer"
+        sql_type: "INT"
+        description: "Foreign key to news_sites table"
+        required: true
+        foreign_key:
+          table: "news_sites"
+          column: "id"
+          on_delete: "CASCADE"
+        python_property_name: "site_id"
+        typescript_property_name: "siteId"
+
+      - name: "script_id"
+        title: "Script ID"
+        type: "integer"
+        sql_type: "INT"
+        description: "Foreign key to scraper_scripts table"
+        required: false
+        foreign_key:
+          table: "scraper_scripts"
+          column: "id"
+          on_delete: "SET NULL"
+        python_property_name: "script_id"
+        typescript_property_name: "scriptId"
+
+      - name: "articles_found"
+        title: "Articles Found"
+        type: "integer"
+        sql_type: "INT"
+        description: "Number of articles found during this run"
+        required: true
+        default: "0"
+        python_property_name: "articles_found"
+        typescript_property_name: "articlesFound"
+
+      - name: "errors"
+        title: "Errors"
+        type: "text"
+        sql_type: "TEXT"
+        description: "Error messages or stack traces from failed runs"
+        required: false
+        python_property_name: "errors"
+        typescript_property_name: "errors"
+
+    indexes:
+      - name: "idx_site_id"
+        columns: ["site_id"]
+      - name: "idx_status"
+        columns: ["status"]
+      - name: "idx_started_at"
+        columns: ["started_at"]
+
+  # ============================================================================
+  # NEWS_SCRAPES - Scraped News Articles
+  # ============================================================================
+  # Stores individual scraped news articles with deduplication
+  # ============================================================================
+  news_scrapes:
+    title: "News Scrapes"
+    description: "Scraped news articles with content and metadata"
+    python_class_name: "NewsScrape"
+    typescript_class_name: "NewsScrape"
+    db_table_name: "news_scrapes"
+    db_name: "indomonitor"
+    primary_key: "id"
+    
+    include_field_sets: []
+    
+    fields:
+      - name: "id"
+        title: "ID"
+        type: "uuid"
+        sql_type: "CHAR(36)"
+        description: "UUID primary key"
+        required: true
+        primary_key: true
+        python_property_name: "id"
+        typescript_property_name: "id"
+
+      - name: "run_id"
+        title: "Run ID"
+        type: "uuid"
+        sql_type: "CHAR(36)"
+        description: "Foreign key to scrape_runs table"
+        required: true
+        foreign_key:
+          table: "scrape_runs"
+          column: "id"
+          on_delete: "CASCADE"
+        python_property_name: "run_id"
+        typescript_property_name: "runId"
+
+      - name: "site_id"
+        title: "Site ID"
+        type: "integer"
+        sql_type: "INT"
+        description: "Foreign key to news_sites table"
+        required: true
+        foreign_key:
+          table: "news_sites"
+          column: "id"
+          on_delete: "CASCADE"
+        python_property_name: "site_id"
+        typescript_property_name: "siteId"
+
+      - name: "url"
+        title: "URL"
+        type: "text"
+        sql_type: "TEXT"
+        description: "URL of the scraped article"
+        required: true
+        python_property_name: "url"
+        typescript_property_name: "url"
+
+      - name: "url_hash"
+        title: "URL Hash"
+        type: "string"
+        sql_type: "CHAR(64) AS (SHA2(url, 256)) STORED"
+        description: "Computed hash of URL for deduplication"
+        required: false
+        computed: true
+        python_property_name: "url_hash"
+        typescript_property_name: "urlHash"
+
+      - name: "title"
+        title: "Title"
+        type: "text"
+        sql_type: "TEXT"
+        description: "Article title"
+        required: false
+        python_property_name: "title"
+        typescript_property_name: "title"
+
+      - name: "content"
+        title: "Content"
+        type: "text"
+        sql_type: "TEXT"
+        description: "Article content/body text"
+        required: false
+        python_property_name: "content"
+        typescript_property_name: "content"
+
+      - name: "published_at"
+        title: "Published At"
+        type: "timestamp"
+        sql_type: "TIMESTAMP"
+        description: "When the article was published (from site metadata)"
+        required: false
+        python_property_name: "published_at"
+        typescript_property_name: "publishedAt"
+
+      - name: "scraped_at"
+        title: "Scraped At"
+        type: "timestamp"
+        sql_type: "TIMESTAMP"
+        description: "When the article was scraped"
+        required: true
+        default: "CURRENT_TIMESTAMP"
+        python_property_name: "scraped_at"
+        typescript_property_name: "scrapedAt"
+
+    indexes:
+      - name: "idx_site_id"
+        columns: ["site_id"]
+      - name: "idx_published_at"
+        columns: ["published_at"]
+      - name: "idx_scraped_at"
+        columns: ["scraped_at"]
+      - name: "ft_title_content"
+        type: "FULLTEXT"
+        columns: ["title", "content"]
+    
+    unique_constraints:
+      - name: "unique_url_hash"
+        columns: ["url_hash"]

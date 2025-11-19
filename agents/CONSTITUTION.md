@@ -31,3 +31,36 @@
 - **Installing dependencies**: Use `uv add package_name` in the project root.
 - **Running scripts**: Execute directly with `./script_name.py` or via `uv run script_name.py`.
 - **Prefer modern HTTP libraries**: Use `httpx` over `requests` (HTTP/2 and HTTP/3 support) and `hypercorn` over `uvicorn` (HTTP/2 and HTTP/3 support).
+
+### Database Operations
+- **ALWAYS use `scripts/manage_db.py` for MySQL database operations** – this is the primary tool for database management
+- **Database inspection**: Run `./scripts/manage_db.py` to get overview of all databases and tables with row counts
+- **Execute SQL queries**: Use `./scripts/manage_db.py --sql "YOUR SQL QUERY"` for any SQL operation
+- **Output formats**: Choose from text (default), JSON (`--json`), or YAML (`--yaml`) output formats
+- **JSON output for programmatic use**: Add `--json` flag for structured JSON responses suitable for parsing
+- **YAML output for human-readable structured data**: Add `--yaml` flag for YAML formatted output
+- **Specify server**: Use `--server connection_name` to target specific connection (default uses `config/database.yaml` default_connection)
+- **Auto-select database**: Use `--database database_name` to auto-select a database (allows unqualified table names)
+- **SQL Operator Compatibility**: Both `!=` and `<>` operators work correctly. The script automatically fixes shell escaping issues with the `!` character, so you can use either operator for "not equal" comparisons.
+- **Examples**:
+  - List all databases and tables: `./scripts/manage_db.py`
+  - Execute query: `./scripts/manage_db.py --sql "SELECT * FROM table LIMIT 10"`
+  - Get JSON response: `./scripts/manage_db.py --sql "SHOW DATABASES" --json`
+  - Get YAML response: `./scripts/manage_db.py --sql "SHOW DATABASES" --yaml`
+  - Use specific server: `./scripts/manage_db.py --server production --sql "SHOW TABLES"`
+  - Auto-select database: `./scripts/manage_db.py --database indomonitor --sql "SHOW CREATE TABLE scraper_scripts"`
+  - Combined: `./scripts/manage_db.py --server vosscloud --database indomonitor --sql "DESCRIBE users"`
+  - Query with NOT EQUAL: `./scripts/manage_db.py --database indomonitor --sql "SELECT * FROM news_sites WHERE status != 'deleted'" --yaml`
+
+### News Site Management
+- **Use `scripts/indomonitor.py` for managing news sites** – CLI tool for adding and managing monitored news sites
+- **Adding news sites**: Use `./scripts/indomonitor.py add site <url>` to add new sites to monitor
+- **Listing news sites**: Use `./scripts/indomonitor.py list news_sites` to get all URLs (one per line)
+- **Automatic features**: The tool validates URLs, checks for duplicates, extracts site names from domains, and sets initial status
+- **Uses auto-increment IDs**: Follows existing schema design (INT AUTO_INCREMENT, not UUID)
+- **Examples**:
+  - Add a news site: `./scripts/indomonitor.py add site https://www.reuters.com`
+  - List all news sites: `./scripts/indomonitor.py list news_sites`
+  - Show help: `./scripts/indomonitor.py -h` or `./scripts/indomonitor.py add site -h`
+  - Script will detect duplicates and report existing entries
+  - Site name is automatically extracted from domain (e.g., "www.reuters.com" → "Reuters")

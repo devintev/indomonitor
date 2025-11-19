@@ -45,7 +45,39 @@ tasks and ideas yet to be developed in to full proper main tasks:
 - [ ] ensure that github repo and its branches are set up
 
 ## Main Active Tasks (backlog)
-To be added based on project development needs.
+
+**P3.1** | Update schema file with explicit FK constraint names | Pending | 2025-11-19 | [→ Details](TASKS/p3_schema_constraint_names.md)
+
+### Add YAML Output Format to manage_db.py
+**Status**: Review | **Labels**: enhancement, database-tools, output-formatting
+**Description**: Add `--yaml` flag to `scripts/manage_db.py` to provide YAML output format alongside existing text and JSON formats. This will give users a third output option that is both human-readable and machine-parseable.
+
+**Requirements to Define**:
+- Add `--yaml` command-line flag that produces YAML formatted output
+- Ensure `--yaml` and `--json` flags are mutually exclusive (cannot be used together)
+- YAML output should follow the same data structure as JSON output
+- All output modes should support YAML: database overview (all servers), single server overview, and SQL query results
+- Update help text and docstring to document the new feature
+- Maintain backward compatibility (default text output unchanged)
+
+**Success Criteria**:
+- `./scripts/manage_db.py --yaml` produces valid YAML output for all servers ✓
+- `./scripts/manage_db.py --server vosscloud --yaml` produces valid YAML for single server ✓
+- `./scripts/manage_db.py --sql "SHOW DATABASES" --yaml` produces valid YAML for query results ✓
+- Using both `--yaml` and `--json` flags together produces an error message ✓
+- Help text accurately documents the YAML option ✓
+
+**Sub-tasks**:
+- [x] Research and Identify all needed frameworks, libraries and already developed code documentation
+- [x] Obtain the documentation and code references (PyYAML already included as dependency)
+- [x] Implement `output_yaml()` function similar to `output_json()`
+- [x] Add `--yaml` argument to argparse with mutual exclusivity check
+- [x] Update all output locations to support YAML formatting
+- [x] Update docstring and help text with YAML examples
+- [x] Update ARCHITECTURE.md and DOCUMENTATION.md to document YAML output feature
+- [x] Testing and validation (test all three output modes with various commands)
+- [ ] User verification. Wait for human to confirm success
+- [ ] Update documentation (README.md if needed)
 
 ## Completed
 This section shall include completed tasks in a very concise way with only the information needed for future development

@@ -1,0 +1,143 @@
+#!/bin/bash
+# Indomonitor Operator - Non-interactive database monitoring agent
+# Uses Claude Code in print mode (non-interactive) with the operator command prompt
+
+set -e  # Exit on error
+
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROMPT_FILE="${SCRIPT_DIR}/agents/commands/operator.md"
+
+# Configuration (can be overridden by environment variables)
+MODEL="${CLAUDE_OPERATOR_MODEL:-haiku}"
+OUTPUT_FORMAT="${CLAUDE_OPERATOR_FORMAT:-text}"
+ENABLE_LOGGING="${CLAUDE_OPERATOR_LOG:-true}"
+
+# Parse command-line arguments
+CUSTOM_TASK=""
+SHOW_HELP=false
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -h|--help)
+            SHOW_HELP=true
+            shift
+            ;;
+        -m|--model)
+            MODEL="$2"
+            shift 2
+            ;;
+        -f|--format)
+            OUTPUT_FORMAT="$2"
+            shift 2
+            ;;
+        --no-log)
+            ENABLE_LOGGING=false
+            shift
+            ;;
+        -t|--task)
+            CUSTOM_TASK="$2"
+            shift 2
+            ;;
+        *)
+            CUSTOM_TASK="$1"
+            shift
+            ;;
+    esac
+done
+
+# Show help if requested
+if [ "$SHOW_HELP" = true ]; then
+    cat <<EOF
+Indomonitor Operator - Non-Interactive Database Monitoring Agent
+
+Usage: ./operator [OPTIONS] [CUSTOM_TASK]
+
+Options:
+  -h, --help          Show this help message
+  -m, --model MODEL   Specify Claude model (default: haiku)
+                      Options: haiku, sonnet, opus
+  -f, --format FORMAT Output format (default: text)
+                      Options: text, json, markdown
+  -t, --task TASK     Add a custom task to the operator workflow
+  --no-log            Disable logging to file
+
+Environment Variables:
+  CLAUDE_OPERATOR_MODEL      Default model to use (default: haiku)
+  CLAUDE_OPERATOR_FORMAT     Default output format (default: text)
+  CLAUDE_OPERATOR_LOG        Enable/disable logging (default: true)
+
+Note:
+  Authentication is handled automatically by Claude Code.
+  Ensure you're logged in with: claude login
+
+Examples:
+  ./operator                                 # Run standard operator workflow
+  ./operator "Check for tables with 0 rows" # Add custom task
+  ./operator --model sonnet --format json   # Use different model and format
+  ./operator --no-log                       # Run without logging
+
+EOF
+    exit 0
+fi
+
+# Check if prompt file exists
+if [ ! -f "$PROMPT_FILE" ]; then
+    echo "Error: Prompt file not found at $PROMPT_FILE"
+    exit 1
+fi
+
+# Set up logging if enabled
+LOG_FILE=""
+if [ "$ENABLE_LOGGING" = true ]; then
+    LOG_DIR="${SCRIPT_DIR}/logs"
+    mkdir -p "$LOG_DIR"
+    LOG_FILE="${LOG_DIR}/operator_$(date +%Y%m%d_%H%M%S).log"
+    echo "Logging to: $LOG_FILE"
+fi
+
+# Read the prompt from the markdown file and strip YAML frontmatter
+# Remove the YAML frontmatter (between --- delimiters) if present
+PROMPT=$(sed '1{/^---$/!q;};1,/^---$/d' "$PROMPT_FILE")
+
+# Append custom task if provided
+if [ -n "$CUSTOM_TASK" ]; then
+    PROMPT="$PROMPT
+
+## Additional Custom Task
+$CUSTOM_TASK"
+fi
+
+# Display execution info
+echo "========================================"
+echo "Indomonitor Operator"
+echo "========================================"
+echo "Model: $MODEL"
+echo "Output Format: $OUTPUT_FORMAT"
+echo "Logging: $ENABLE_LOGGING"
+if [ -n "$CUSTOM_TASK" ]; then
+    echo "Custom Task: $CUSTOM_TASK"
+fi
+echo "========================================"
+echo ""
+
+# Run Claude Code in print mode (non-interactive) with the operator prompt
+if [ "$ENABLE_LOGGING" = true ]; then
+    claude --model "$MODEL" --print "$PROMPT" \
+      --output-format "$OUTPUT_FORMAT" \
+      --permission-mode bypassPermissions \
+      2>&1 | tee "$LOG_FILE"
+else
+    claude --model "$MODEL" --print "$PROMPT" \
+      --output-format "$OUTPUT_FORMAT" \
+      --permission-mode bypassPermissions
+fi
+
+# Report completion
+echo ""
+echo "========================================"
+echo "Operator execution completed"
+if [ "$ENABLE_LOGGING" = true ]; then
+    echo "Log saved to: $LOG_FILE"
+fi
+echo "========================================"

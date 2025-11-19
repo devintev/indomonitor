@@ -40,16 +40,88 @@ Automated system that monitors news websites, extracts content, and stores it in
 
 - Python 3.11+
 - Scraping: BeautifulSoup4, Scrapy, or Playwright
-- Database: PostgreSQL/MongoDB
+- Database: MySQL
 - Agent Platform: Claude Code (headless)
 - Scheduling: APScheduler/Celery
 - Environment: Docker
+
+## Management Tools
+
+### indomonitor.py
+Command-line interface for managing the news monitoring system.
+
+**Add News Sites:**
+```bash
+# Add a new site to monitor
+./scripts/indomonitor.py add site https://example.com
+
+# The script will:
+# - Validate the URL format
+# - Check for duplicates
+# - Extract site name from domain
+# - Insert into database with 'pending' status
+```
+
+**Features:**
+- Automatic duplicate detection
+- URL validation (must be http/https)
+- Domain-based name extraction
+- Uses auto-increment IDs (follows schema)
+
+**Usage:**
+```bash
+# Show help
+./scripts/indomonitor.py -h
+./scripts/indomonitor.py add site -h
+
+# Add a news site
+./scripts/indomonitor.py add site https://www.reuters.com
+# Output: Successfully added new site (ID: 1, Name: Reuters)
+
+# Try to add duplicate
+./scripts/indomonitor.py add site https://www.reuters.com
+# Output: Site already exists (ID: 1)
+
+# List all news sites (outputs URLs, one per line)
+./scripts/indomonitor.py list news_sites
+# Output:
+# https://www.reuters.com
+# https://news.ycombinator.com
+```
+
+### manage_db.py
+Primary database management tool for MySQL operations.
+
+**Database Inspection:**
+```bash
+# Check all configured servers
+./scripts/manage_db.py
+
+# Check specific server
+./scripts/manage_db.py --server vosscloud
+
+# Execute SQL query
+./scripts/manage_db.py --sql "SELECT * FROM indomonitor.news_sites"
+
+# JSON output for programmatic use
+./scripts/manage_db.py --json
+./scripts/manage_db.py --sql "SHOW DATABASES" --json
+```
+
+**Features:**
+- Multi-server health checking
+- Database and table inspection with row counts
+- SQL query execution
+- Multiple output formats (text, JSON, YAML)
 
 ## Workflow
 
 ### New Site Onboarding
 
-1. New site added to news_sites table
+1. Add new site using CLI tool:
+   ```bash
+   ./scripts/indomonitor.py add site https://example.com/news
+   ```
 2. Manager calls Research Agent to investigate site
 3. Research Agent creates site structure report → stored in DB
 4. Manager calls Script Writer Agent

@@ -1,0 +1,58 @@
+# =============================================================================
+# Agent Execution Metadata Field Set
+# =============================================================================
+# Common fields for tracking AI agent execution lifecycle and metrics
+# Used by: agent_runs table
+# =============================================================================
+
+field_set:
+  name: "agent_metadata"
+  description: "Common fields for tracking AI agent execution lifecycle and metrics"
+  
+  fields:
+    - name: "started_at"
+      title: "Started At"
+      type: "timestamp"
+      sql_type: "TIMESTAMP"
+      description: "When the agent execution started"
+      required: true
+      default: "CURRENT_TIMESTAMP"
+      python_property_name: "started_at"
+      typescript_property_name: "startedAt"
+
+    - name: "completed_at"
+      title: "Completed At"
+      type: "timestamp"
+      sql_type: "TIMESTAMP"
+      description: "When the agent execution completed (NULL if still running)"
+      required: false
+      python_property_name: "completed_at"
+      typescript_property_name: "completedAt"
+
+    - name: "status"
+      title: "Status"
+      type: "string"
+      sql_type: "VARCHAR(50)"
+      description: "Execution status"
+      required: true
+      enum: ["running", "completed", "failed"]
+      python_property_name: "status"
+      typescript_property_name: "status"
+
+    - name: "token_usage"
+      title: "Token Usage"
+      type: "integer"
+      sql_type: "INT"
+      description: "Number of tokens consumed during agent execution"
+      required: false
+      python_property_name: "token_usage"
+      typescript_property_name: "tokenUsage"
+
+    - name: "report"
+      title: "Report"
+      type: "text"
+      sql_type: "TEXT"
+      description: "Agent execution report or summary"
+      required: false
+      python_property_name: "report"
+      typescript_property_name: "report"
